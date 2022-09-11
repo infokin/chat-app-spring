@@ -1,4 +1,4 @@
-package org.infokin.chatappspring;
+package org.infokin.chatapp;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

@@ -1,4 +1,4 @@
-package org.infokin.chatappspring;
+package org.infokin.chatapp;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
