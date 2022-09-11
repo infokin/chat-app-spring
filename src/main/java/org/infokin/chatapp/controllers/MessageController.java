@@ -3,14 +3,13 @@ package org.infokin.chatapp.controllers;
 import org.infokin.chatapp.models.Message;
 import org.infokin.chatapp.services.MessageService;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RestController;
 
-@Controller
-@RequestMapping("/messages")
+@RestController
+@RequestMapping("messages")
 public class MessageController {
 
   private final MessageService messageService;
@@ -20,7 +19,7 @@ public class MessageController {
   }
 
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
-  public @ResponseBody void receiveMessage(@RequestBody Message message) {
+  public void receiveMessage(@RequestBody Message message) {
     this.messageService.addMessage(message);
   }
 
