@@ -15,4 +15,8 @@ public class MessageService {
     this.messages.add(message);
   }
 
+  public List<Message> getMessages() {
+    return messages;
+  }
+
 }
