@@ -15,7 +15,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @SpringBootTest
 class MessageServiceTest {
 
-  private final Faker faker = new Faker();
+  @Autowired
+  private Faker faker;
 
   @Autowired
   private MessageService messageService;

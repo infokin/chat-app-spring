@@ -19,9 +19,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class MessageControllerTest {
 
-  private final Faker faker = new Faker();
-
   private static final String messagesUri = "/messages";
+
+  @Autowired
+  private Faker faker;
 
   @Autowired
   private WebTestClient webTestClient;
