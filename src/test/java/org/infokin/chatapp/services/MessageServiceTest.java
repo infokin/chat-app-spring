@@ -24,7 +24,7 @@ class MessageServiceTest {
   @DisplayName("Test storage and retrieval of messages")
   void testStorageAndRetrievalOfMessages() {
     List<Message> inputMessages = IntStream.range(0, 10)
-      .mapToObj(value -> {
+      .mapToObj(i -> {
         String quote = faker.yoda().quote();
         return new Message(quote);
       }).toList();
