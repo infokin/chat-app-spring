@@ -24,15 +24,21 @@ class MessageServiceTest {
   @Test
   @DisplayName("Test storage and retrieval of messages")
   void testStorageAndRetrievalOfMessages() {
+
+    // Generate test messages
     List<Message> inputMessages = IntStream.range(0, 10)
       .mapToObj(i -> {
         String quote = faker.yoda().quote();
         return new Message(quote);
       }).toList();
 
+    // Store messages
     inputMessages.forEach(messageService::addMessage);
 
+    // Retrieve messages
     List<Message> outputMessages = messageService.getMessages();
+
+    // Verify messages
     assertEquals(inputMessages.size(), outputMessages.size());
 
     for (int i = 0; i < outputMessages.size(); i++) {

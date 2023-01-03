@@ -19,8 +19,8 @@ public class MessageController {
   }
 
   @Operation(
-    summary = "Store a message",
-    description = "This endpoint stores the received message on the server."
+    summary = "Send a message",
+    description = "This endpoint is used to send a message to the server."
   )
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
   public void receiveMessage(@RequestBody Message message) {
@@ -28,8 +28,8 @@ public class MessageController {
   }
 
   @Operation(
-    summary = "Retrieve all messages",
-    description = "This endpoint returns all messages that are currently stored on the server."
+    summary = "Get all messages",
+    description = "This endpoint is used to get all messages from the server."
   )
   @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
   public List<Message> getMessages() {
