@@ -32,12 +32,14 @@ class MessageControllerTest {
   void testSendingAndReceivingMessages() {
     int numberOfMessages = 3;
 
+    // Prepare messages to send
     List<Message> messages = IntStream.range(0, numberOfMessages)
       .mapToObj(i -> {
         String quote = faker.yoda().quote();
         return new Message(quote);
       }).toList();
 
+    // Send messages and verify response
     for (Message message : messages) {
       webTestClient.post()
         .uri(messagesUri)
@@ -48,6 +50,7 @@ class MessageControllerTest {
         .expectBody().isEmpty();
     }
 
+    // Receive messages and verify response
     List<Message> receivedMessages = webTestClient.get()
       .uri(messagesUri)
       .accept(MediaType.APPLICATION_JSON)
@@ -58,6 +61,7 @@ class MessageControllerTest {
       .returnResult()
       .getResponseBody();
 
+    // Verify received messages
     assertNotNull(receivedMessages);
     assertEquals(numberOfMessages, receivedMessages.size());
 
