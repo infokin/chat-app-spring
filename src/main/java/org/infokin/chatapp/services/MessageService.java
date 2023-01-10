@@ -12,7 +12,7 @@ public class MessageService {
   private final List<Message> messages = new ArrayList<>();
 
   public void addMessage(Message message) {
-    this.messages.add(message);
+    messages.add(message);
   }
 
   public List<Message> getMessages() {
