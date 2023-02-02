@@ -16,7 +16,7 @@ public class MessageController {
 
   private final MessageService messageService;
 
-  Sinks.Many<Message> messageEmitter = Sinks.many().multicast().directBestEffort();
+  private final Sinks.Many<Message> messageEmitter = Sinks.many().multicast().directBestEffort();
 
   public MessageController(MessageService messageService) {
     this.messageService = messageService;
