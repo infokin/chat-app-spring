@@ -8,9 +8,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,30 +30,68 @@ class MessageControllerTest {
   @Autowired
   private WebTestClient webTestClient;
 
-  @Test
-  @DisplayName("Test sending and receiving messages")
-  void testSendingAndReceivingMessages() {
-    int numberOfMessages = 3;
+  private Message createMessage() {
+    String quote = faker.yoda().quote();
+    return new Message(quote);
+  }
 
-    // Prepare messages to send
-    List<Message> messages = IntStream.range(0, numberOfMessages)
-      .mapToObj(i -> {
-        String quote = faker.yoda().quote();
-        return new Message(quote);
-      }).toList();
+  /**
+   * Sends a message to the server and verifies the response.
+   */
+  private void sendMessage(Message message) {
+    webTestClient.post()
+      .uri(messagesUri)
+      .contentType(MediaType.APPLICATION_JSON)
+      .body(Mono.just(message), Message.class)
+      .exchange()
+      .expectStatus().isOk()
+      .expectBody().isEmpty();
+  }
 
-    // Send messages and verify response
-    for (Message message : messages) {
-      webTestClient.post()
+  /**
+   * Creates a basic listener that receives a message stream from the
+   * server and verifies each response.
+   */
+  private Mono<Void> createBasicListener(int numberOfMessages) {
+    AtomicInteger receivedMessagesCount = new AtomicInteger();
+    return Mono.<Void>fromRunnable(() ->
+      webTestClient.get()
         .uri(messagesUri)
-        .contentType(MediaType.APPLICATION_JSON)
-        .body(Mono.just(message), Message.class)
+        .accept(MediaType.TEXT_EVENT_STREAM)
         .exchange()
         .expectStatus().isOk()
-        .expectBody().isEmpty();
-    }
+        .returnResult(Message.class)
+        .getResponseBody()
+        .take(numberOfMessages)
+        .doOnNext(receivedMessage -> {
+          assertNotNull(receivedMessage);
+          receivedMessagesCount.getAndIncrement();
+        })
+        .doOnComplete(() -> assertEquals(numberOfMessages, receivedMessagesCount.get()))
+        .blockLast()
+    ).publishOn(Schedulers.boundedElastic());
+  }
 
-    // Receive messages and verify response
+  @Test
+  @DisplayName("Should send a message to the server")
+  void testSendMessage() {
+    Message message = createMessage();
+    sendMessage(message);
+  }
+
+  @Test
+  @DisplayName("Should get all messages from the server")
+  void testReceiveAllMessages() {
+
+    // Prepare messages to be sent
+    List<Message> messages = IntStream.range(0, 5)
+      .mapToObj(i -> createMessage())
+      .toList();
+
+    // Send messages
+    messages.forEach(this::sendMessage);
+
+    // Get all messages and verify each response
     List<Message> receivedMessages = webTestClient.get()
       .uri(messagesUri)
       .accept(MediaType.APPLICATION_JSON)
@@ -61,16 +102,64 @@ class MessageControllerTest {
       .returnResult()
       .getResponseBody();
 
-    // Verify received messages
+    // Verify that received messages are the ones previously sent
     assertNotNull(receivedMessages);
-    assertEquals(numberOfMessages, receivedMessages.size());
+    assertEquals(messages.size(), receivedMessages.size());
 
-    for (int i = 0; i < numberOfMessages; i++) {
+    for (int i = 0; i < receivedMessages.size(); i++) {
       Message expectedMessage = messages.get(i);
       Message actualMessage = receivedMessages.get(i);
       assertEquals(expectedMessage, actualMessage);
       assertEquals(expectedMessage.getContent(), actualMessage.getContent());
     }
+  }
+
+  @Test
+  @DisplayName("Should get new messages as a stream")
+  void testReceiveMessagesAsStream() {
+
+    final int NUMBERS_OF_MESSAGES = 15;
+
+    // Create messages
+    List<Message> messages = IntStream.range(0, NUMBERS_OF_MESSAGES)
+      .mapToObj(i -> createMessage())
+      .toList();
+
+    // Set up message receiver
+    Mono<Void> listener = createBasicListener(NUMBERS_OF_MESSAGES);
+
+    // Send messages
+    Mono<Object> sendMessages = Mono.fromRunnable(() -> messages.forEach(this::sendMessage))
+      .publishOn(Schedulers.boundedElastic());
+
+    // Execute requests
+    Flux.merge(listener, sendMessages)
+      .blockLast();
+  }
+
+  @Test
+  @DisplayName("Should get new messages as a stream for multiple listeners")
+  void testReceiveMessagesAsStreamWithMultipleListeners() {
+
+    final int NUMBERS_OF_MESSAGES = 10;
+
+    // Create messages
+    List<Message> messages = IntStream.range(0, NUMBERS_OF_MESSAGES)
+      .mapToObj(i -> createMessage())
+      .toList();
+
+    // Set up message receivers
+    Mono<Void> listener1 = createBasicListener(NUMBERS_OF_MESSAGES);
+    Mono<Void> listener2 = createBasicListener(NUMBERS_OF_MESSAGES);
+    Mono<Void> listener3 = createBasicListener(NUMBERS_OF_MESSAGES);
+
+    // Send messages
+    Mono<Object> sendMessages = Mono.fromRunnable(() -> messages.forEach(this::sendMessage))
+      .publishOn(Schedulers.boundedElastic());
+
+    // Execute requests
+    Flux.merge(listener1, listener2, listener3, sendMessages)
+      .blockLast();
   }
 
 }
