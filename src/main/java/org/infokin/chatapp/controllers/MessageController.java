@@ -1,6 +1,7 @@
 package org.infokin.chatapp.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
+import lombok.extern.slf4j.Slf4j;
 import org.infokin.chatapp.models.Message;
 import org.infokin.chatapp.services.MessageService;
 import org.springframework.http.MediaType;
@@ -10,6 +11,7 @@ import reactor.core.publisher.Sinks;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("messages")
 public class MessageController {
@@ -28,6 +30,7 @@ public class MessageController {
   )
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
   public void receiveMessage(@RequestBody Message message) {
+    log.debug("Received message: {}", message);
     messageService.addMessage(message);
     messageEmitter.tryEmitNext(message);
   }
@@ -38,6 +41,7 @@ public class MessageController {
   )
   @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
   public List<Message> getMessages() {
+    log.debug("Received request to get all messages");
     return messageService.getMessages();
   }
 
@@ -47,6 +51,7 @@ public class MessageController {
   )
   @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
   public Flux<Message> emitMessages() {
+    log.debug("Received request to get messages as stream");
     return messageEmitter.asFlux();
   }
 
